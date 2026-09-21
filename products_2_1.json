@@ -1,0 +1,40 @@
+[
+  {
+    "id": "prod_001",
+    "nome": "Transformação Emocional 21 Dias",
+    "categoria": "Cursos",
+    "imagem": "https://images.unsplash.com/photo-1516306580123-e6e52b1b7b5f?w=800",
+    "descricaoCurta": "Jornada completa",
+    "descricaoCompleta": "Jornada profunda",
+    "preco": 297,
+    "precoPromo": 147,
+    "linkCheckout": "#",
+    "linkProduto": "#",
+    "whatsapp": "5511999999999",
+    "status": "Ativo",
+    "destaque": true,
+    "destaquePrincipal": true,
+    "ordem": 1,
+    "selo": "NOVO",
+    "avaliacao": 4.9
+  },
+  {
+    "id": "prod_002",
+    "nome": "Frequência dos Nomes PRO",
+    "categoria": "Ferramentas",
+    "imagem": "https://images.unsplash.com/photo-1557682224-33bb4a46bbde?w=800",
+    "descricaoCurta": "Ferramenta pro",
+    "descricaoCompleta": "Ferramenta completa",
+    "preco": 97,
+    "precoPromo": 49.9,
+    "linkCheckout": "#",
+    "linkProduto": "#",
+    "whatsapp": "5511999999999",
+    "status": "Ativo",
+    "destaque": true,
+    "destaquePrincipal": false,
+    "ordem": 2,
+    "selo": "OFERTA",
+    "avaliacao": 4.9
+  }
+]

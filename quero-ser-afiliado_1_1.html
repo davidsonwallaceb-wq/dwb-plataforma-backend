@@ -1,0 +1,46 @@
+
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Quero ser Afiliado - DWB</title><link rel="stylesheet" href="style.css"></head><body>
+<div class="glow glow-blue"></div><div class="glow glow-gold"></div>
+<header class="header"><div class="logo">DWB <span>PLATAFORMA</span></div><a href="index.html" class="btn-gold" style="text-decoration:none">Vitrine</a></header>
+<div style="max-width:600px;margin:48px auto;padding:0 20px">
+<div style="background:#111827;border:1px solid #1f2a44;border-radius:24px;padding:32px">
+<div style="text-align:center;margin-bottom:24px"><h1 style="font-size:32px">Seja Afiliado DWB</h1><p style="color:#9aa4bf;margin-top:8px">Ganhe até 50% de comissão vendendo nossos produtos. Cadastro gratuito, aprovação em até 24h.</p></div>
+<div style="background:#0a0e1a;border:1px solid #1e3a5f;border-radius:12px;padding:16px;margin-bottom:20px">
+<div style="color:#e8c88a;font-weight:700;margin-bottom:8px">💰 Como funciona:</div>
+<div style="font-size:13px;color:#9aa4bf;line-height:1.6">
+1. Cadastre-se com seu email e PIX<br>
+2. Receba seu link único: <code style="color:#e8c88a">?ref=SEUCODIGO</code><br>
+3. Divulgue em Instagram, WhatsApp, YouTube<br>
+4. Cada venda com seu link = comissão na hora<br>
+5. Saque mensal via PIX
+</div>
+</div>
+<div class="form-grid" style="grid-template-columns:1fr">
+<input id="nome" placeholder="Seu nome completo *" style="background:#0f172a;border:1px solid #1f2a44;border-radius:10px;padding:12px;color:white">
+<input id="email" placeholder="Seu melhor email *" type="email" style="background:#0f172a;border:1px solid #1f2a44;border-radius:10px;padding:12px;color:white">
+<input id="telefone" placeholder="WhatsApp com DDD" style="background:#0f172a;border:1px solid #1f2a44;border-radius:10px;padding:12px;color:white">
+<input id="pix" placeholder="Sua chave PIX (para receber)" style="background:#0f172a;border:1px solid #1f2a44;border-radius:10px;padding:12px;color:white">
+<textarea id="sobre" placeholder="Como você pretende divulgar? (Instagram, YouTube, lista...)" style="background:#0f172a;border:1px solid #1f2a44;border-radius:10px;padding:12px;color:white;min-height:80px"></textarea>
+</div>
+<button class="btn-gold" style="width:100%;margin-top:16px;padding:14px;font-size:16px" onclick="cadastrar()">QUERO SER AFILIADO →</button>
+<div id="msg" style="margin-top:16px;text-align:center"></div>
+<div style="text-align:center;margin-top:16px;font-size:12px;color:#9aa4bf">Ao se cadastrar você concorda com nossos termos de afiliado. Comissão padrão 30%, podendo chegar a 50%.</div>
+</div>
+</div>
+<script>
+async function cadastrar(){
+  const obj={nome:document.getElementById('nome').value,email:document.getElementById('email').value,telefone:document.getElementById('telefone').value,chavePix:document.getElementById('pix').value,sobre:document.getElementById('sobre').value};
+  if(!obj.nome||!obj.email){alert('Nome e email obrigatórios');return;}
+  const btn=document.querySelector('.btn-gold');btn.textContent='Enviando...';btn.disabled=true;
+  try{
+    const r=await fetch('/api/afiliados/cadastro-publico',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.error||'Erro');
+    document.getElementById('msg').innerHTML=`<div style="background:#30d15822;border:1px solid #30d15844;color:#30d158;padding:12px;border-radius:10px"><b>Cadastro recebido!</b><br>Seu código: <b>${data.codigo}</b><br>Status: Pendente - vamos analisar em até 24h e te avisar por email.<br><br>Seu futuro link será:<br><code style="color:#e8c88a">${window.location.origin}/?ref=${data.codigo}</code></div>`;
+    btn.style.display='none';
+  }catch(e){
+    document.getElementById('msg').innerHTML=`<div style="background:#ff453a22;border:1px solid #ff453a44;color:#ff453a;padding:12px;border-radius:10px">${e.message}</div>`;
+    btn.textContent='QUERO SER AFILIADO →';btn.disabled=false;
+  }
+}
+</script></body></html>

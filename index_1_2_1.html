@@ -1,0 +1,14 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DWB</title><style>:root{--bg:#05070d} body{background:var(--bg)}</style></head><body>
+<header class="header"><div class="logo">DWB <span>PLATAFORMA</span></div><a href="admin.html" class="btn-gold" style="text-decoration:none">ADMIN</a></header>
+<section id="hero" class="hero"></section><div id="vitrine"></div>
+<div id="modal" class="modal" onclick="if(event.target===this)fechar()"><div id="box" class="modal-box"></div></div>
+<script>
+let P=[];let REF=null;
+(function(){const u=new URLSearchParams(window.location.search);const r=u.get('ref');if(r){REF=r;localStorage.setItem('dwb_ref',r);fetch('/api/track/clique',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo:r})});}else{REF=localStorage.getItem('dwb_ref');}})();async function load(){try{const r=await fetch('/api/produtos?ativos=1');P=await r.json();}catch(e){const r=await fetch('products.json');P=await r.json();}render()}
+function render(){const h=P.find(x=>x.destaquePrincipal)||P[0];if(h){document.getElementById('hero').style.backgroundImage=`url(${h.imagem})`;document.getElementById('hero').innerHTML=`<div class="hero-content"><h1>${h.nome}</h1><p>${h.descricaoCurta}</p><button class="btn-gold" onclick="openM('${h.id}')">QUERO CONHECER</button></div>`;}
+const cats={};P.forEach(p=>{(cats[p.categoria]=cats[p.categoria]||[]).push(p)});let html='';for(const c in cats){html+=`<div class="row-section"><div class="row-header"><h2>${c.toUpperCase()}</h2></div><div class="carousel">${cats[c].map(card).join('')}</div></div>`}document.getElementById('vitrine').innerHTML=html;}
+function card(p){ const checkoutLink = REF ? (p.linkCheckout + (p.linkCheckout.includes('?')?'&':'?') + 'ref='+REF) : p.linkCheckout; return `<div class="card" onclick="openM('${p.id}')"><div class="card-img" style="background-image:url(${p.imagem})"><div class="selo ${p.selo}">${p.selo}</div></div><div class="card-body"><div class="card-cat">${p.categoria}</div><div class="card-title">${p.nome}</div><div class="price">R$ ${p.precoPromo||p.preco}</div></div></div>`}
+function openM(id){const p=P.find(x=>x.id===id);document.getElementById('box').innerHTML=`<div class="modal-hero" style="background-image:url(${p.imagem})"><div class="modal-content"><h2>${p.nome}</h2></div></div><div class="modal-body"><p>${p.descricaoCompleta}</p><a href="${p.linkCheckout}" class="btn-gold" target="_blank">COMPRAR AGORA</a></div>`;document.getElementById('modal').classList.add('open');}
+function fechar(){document.getElementById('modal').classList.remove('open');}
+load();
+</script></body></html>

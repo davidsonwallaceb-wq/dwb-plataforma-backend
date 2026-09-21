@@ -1,0 +1,68 @@
+
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pagamentos Afiliados - DWB</title><link rel="stylesheet" href="style.css"></head><body>
+<div class="admin-grid">
+<aside class="sidebar">
+<div class="logo">DWB <span>PAGAMENTOS</span></div>
+<a href="index.html" style="color:white;text-decoration:none;display:block;padding:8px 12px;background:#111827;border-radius:8px;margin-bottom:8px">← Vitrine</a>
+<a href="admin.html" style="color:#9aa4bf;text-decoration:none;display:block;padding:8px 12px">📦 Produtos</a>
+<a href="afiliados.html" style="color:#9aa4bf;text-decoration:none;display:block;padding:8px 12px">🤝 Afiliados</a>
+<div style="color:white;padding:8px 12px;background:#1e3a5f;border-radius:8px">💸 Pagamentos</div>
+<div style="margin-top:20px;background:#111827;padding:12px;border-radius:12px">
+<label style="font-size:12px;color:#9aa4bf">Filtrar por mês</label>
+<input type="month" id="filtroMes" style="width:100%;margin-top:6px;background:#0f172a;border:1px solid #1f2a44;border-radius:8px;padding:8px;color:white">
+<button class="btn-gold" style="width:100%;margin-top:8px" onclick="carregar()">Filtrar</button>
+<button style="width:100%;margin-top:8px;background:#1f2a44;color:white;border:none;padding:8px;border-radius:8px" onclick="document.getElementById('filtroMes').value='';carregar()">Limpar</button>
+</div>
+</aside>
+<main style="padding:24px">
+<h1>Relatório de Pagamentos</h1>
+<div id="resumo" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0"></div>
+<div id="lista"></div>
+<h2 style="margin-top:32px">Todas as Vendas</h2>
+<div style="display:flex;gap:8px;margin:12px 0">
+<input type="date" id="de" style="background:#0f172a;border:1px solid #1f2a44;border-radius:8px;padding:8px;color:white">
+<input type="date" id="ate" style="background:#0f172a;border:1px solid #1f2a44;border-radius:8px;padding:8px;color:white">
+<button class="btn-gold" onclick="carregarRelatorio()">Buscar</button>
+</div>
+<div id="relatorio"></div>
+</main>
+</div>
+<script>
+async function carregar(){
+  const mes=document.getElementById('filtroMes').value;
+  const url=mes?`/api/pagamentos?mes=${mes}`:'/api/pagamentos';
+  const r=await fetch(url);const data=await r.json();
+  document.getElementById('lista').innerHTML=data.length?data.map(p=>`<div style="background:#111827;border:1px solid #1f2a44;border-radius:12px;padding:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+    <div><b>${p.nome}</b> • ${p.codigo}<br><small style="color:#9aa4bf">${p.email} • PIX: ${p.chavePix||'Não informado'}</small><br><small>${p.qtdVendas} vendas • Total pendente: <b style="color:#e8c88a">R$ ${p.totalPendente.toFixed(2)}</b></small></div>
+    <div style="display:flex;flex-direction:column;gap:6px"><button class="btn-gold" onclick="pagar('${p.afiliadoId}','${mes}')">PAGAR R$ ${p.totalPendente.toFixed(2)} → PIX</button><button style="background:#1f2a44;color:white;border:none;padding:6px 12px;border-radius:8px" onclick="verDetalhes('${p.afiliadoId}')">Ver vendas</button></div>
+  </div>`).join(''):`<div style="color:#9aa4bf;text-align:center;padding:40px">Nenhum pagamento pendente ${mes?'neste mês':''}</div>`;
+  carregarRelatorio();
+}
+async function carregarRelatorio(){
+  const de=document.getElementById('de').value; const ate=document.getElementById('ate').value;
+  let url='/api/relatorio'; if(de&&ate) url+=`?de=${de}&ate=${ate}`;
+  const r=await fetch(url);const data=await r.json();
+  document.getElementById('resumo').innerHTML=`
+    <div style="background:#111827;border:1px solid #1f2a44;border-radius:12px;padding:16px;text-align:center"><div style="font-size:22px;font-weight:900">${data.resumo.qtd}</div><div style="font-size:11px;color:#9aa4bf">VENDAS</div></div>
+    <div style="background:#111827;border:1px solid #1f2a44;border-radius:12px;padding:16px;text-align:center"><div style="font-size:22px;font-weight:900;color:#e8c88a">R$ ${data.resumo.totalVendas.toFixed(2)}</div><div style="font-size:11px;color:#9aa4bf">TOTAL VENDIDO</div></div>
+    <div style="background:#111827;border:1px solid #1f2a44;border-radius:12px;padding:16px;text-align:center"><div style="font-size:22px;font-weight:900;color:#ff9f0a">R$ ${data.resumo.totalPendente.toFixed(2)}</div><div style="font-size:11px;color:#9aa4bf">A PAGAR</div></div>
+    <div style="background:#111827;border:1px solid #1f2a44;border-radius:12px;padding:16px;text-align:center"><div style="font-size:22px;font-weight:900;color:#30d158">R$ ${data.resumo.totalPago.toFixed(2)}</div><div style="font-size:11px;color:#9aa4bf">JÁ PAGO</div></div>
+  `;
+  document.getElementById('relatorio').innerHTML=data.vendas.map(v=>`<div style="background:#0a0e1a;border:1px solid #1f2a44;border-radius:10px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;font-size:13px"><div><b>${v.produtoNome||v.produtoId}</b> • ${v.clienteNome||'Cliente'}<br><small style="color:#9aa4bf">Afiliado: ${v.afiliadoNome||v.codigoRef||'Direto'} • ${new Date(v.created_at).toLocaleString()}</small></div><div style="text-align:right"><div>R$ ${v.valor?.toFixed(2)} → <b style="color:#e8c88a">R$ ${v.comissao?.toFixed(2)}</b></div><span class="badge ${v.status==='Pago'?'ativo':'inativo'}">${v.status}</span> ${v.status==='Pendente'?`<button style="margin-left:6px;background:#30d158;color:white;border:none;padding:4px 8px;border-radius:6px;cursor:pointer" onclick="marcarPago('${v.id}')">Marcar Pago</button>`:''}</div></div>`).join('');
+}
+async function pagar(afiliadoId,mes){
+  if(!confirm('Confirmar pagamento? Isso vai zerar o saldo e marcar todas as vendas pendentes deste afiliado como PAGAS.')) return;
+  const r=await fetch('/api/pagamentos/pagar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({afiliadoId,mes:mes||undefined})});
+  const data=await r.json();
+  alert(`${data.pagas} vendas marcadas como pagas!`);
+  carregar();
+}
+async function marcarPago(vendaId){
+  await fetch(`/api/vendas/${vendaId}/status`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'Pago'})});
+  carregarRelatorio();
+}
+function verDetalhes(afiliadoId){
+  window.open(`afiliado.html?codigo=${afiliadoId}`,'_blank');
+}
+carregar();
+</script></body></html>

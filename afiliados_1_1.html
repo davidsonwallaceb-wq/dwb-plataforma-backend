@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Afiliados - DWB</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.afiliado-card{background:#111827;border:1px solid #1f2a44;border-radius:16px;padding:16px;margin-bottom:12px;display:flex;gap:16px;align-items:center}
+.link-box{background:#0a0e1a;border:1px dashed #2a5a8a;border-radius:10px;padding:10px 14px;font-family:monospace;color:#e8c88a;word-break:break-all}
+</style>
+</head><body>
+<div class="admin-grid">
+<aside class="sidebar">
+<div class="logo">DWB <span>AFILIADOS</span></div>
+<a href="index.html" style="color:white;text-decoration:none;display:block;padding:8px 12px;background:#111827;border-radius:8px;margin-bottom:8px">← Vitrine</a>
+<a href="admin.html" style="color:#9aa4bf;text-decoration:none;display:block;padding:8px 12px">📦 Produtos</a>
+<div style="color:white;padding:8px 12px;background:#1e3a5f;border-radius:8px">🤝 Afiliados</div>
+<div id="stats" style="margin-top:20px;color:#9aa4bf;font-size:13px;background:#111827;padding:12px;border-radius:12px"></div>
+<div style="margin-top:16px;background:#0a0e1a;padding:12px;border-radius:12px;border:1px solid #1f2a44">
+<div style="font-size:12px;color:#e8c88a;margin-bottom:8px">CONFIG GLOBAL</div>
+<label style="font-size:12px;color:#9aa4bf">Comissão padrão %</label>
+<div style="display:flex;gap:8px;margin-top:4px"><input id="comissaoGlobal" type="number" value="30" style="width:80px;background:#0f172a;border:1px solid #1f2a44;border-radius:8px;padding:8px;color:white"><button class="btn-gold" onclick="salvarGlobal()" style="padding:6px 12px">Salvar</button></div>
+</div>
+</aside>
+<main style="padding:24px;overflow:auto">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><h1>Afiliados</h1><button class="btn-gold" onclick="novoAfiliado()">+ NOVO AFILIADO</button></div>
+<div id="formArea"></div>
+<div id="lista"></div>
+<h2 style="margin-top:32px">Vendas Recentes (com afiliado)</h2>
+<div id="vendas" style="margin-top:12px"></div>
+</main>
+</div>
+<script>
+let afiliados=[];let produtos=[];let editId=null;
+async function carregar(){
+  const [r1,r2,r3]=await Promise.all([fetch('/api/afiliados'),fetch('/api/produtos'),fetch('/api/vendas')]);
+  afiliados=await r1.json(); produtos=await r2.json(); const vendas=await r3.json();
+  renderLista(); renderVendas(vendas); renderStats();
+  const cfg=await (await fetch('/api/config')).json(); if(cfg.comissao_global) document.getElementById('comissaoGlobal').value=cfg.comissao_global;
+}
+function renderStats(){
+  const total=afiliados.length; const ativos=afiliados.filter(a=>a.status==='Ativo').length;
+  const saldo=afiliados.reduce((s,a)=>s+(a.saldo||0),0);
+  document.getElementById('stats').innerHTML=`Afiliados: ${total}<br>Ativos: ${ativos}<br>Saldo a pagar: R$ ${saldo.toFixed(2)}`;
+}
+function renderLista(){
+  document.getElementById('lista').innerHTML=afiliados.map(a=>{
+    const linkBase=`${window.location.origin}/?ref=${a.codigo}`;
+    const linkProd=produtos.length?`${window.location.origin}/?ref=${a.codigo}#produto=${produtos[0].id}`:'';
+    return `<div class="afiliado-card">
+      <div style="flex:1">
+        <div style="font-weight:800">${a.nome} <span style="color:#e8c88a;font-size:12px">${a.codigo}</span> <span class="badge ${a.status==='Ativo'?'ativo':'inativo'}" style="margin-left:8px">${a.status}</span></div>
+        <div style="font-size:12px;color:#9aa4bf">${a.email} • ${a.porcentagemPadrao}% padrão • Saldo R$ ${(a.saldo||0).toFixed(2)}</div>
+        <div class="link-box" style="margin-top:8px">🔗 Link geral: ${linkBase}<br><small style="color:#9aa4bf">Esse link serve para TODOS os produtos. O sistema rastreia automaticamente.</small></div>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+          ${produtos.filter(p=>p.permiteAfiliado).slice(0,3).map(p=>`<span style="font-size:11px;background:#0f172a;padding:4px 8px;border-radius:999px;border:1px solid #1f2a44">${p.nome}: ${a.porcentagemPadrao}% → R$ ${(p.preco*(a.porcentagemPadrao/100)).toFixed(2)}</span>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button onclick="editar('${a.id}')" style="background:#1f2a44;color:white;border:none;padding:6px 12px;border-radius:8px;cursor:pointer">Editar %</button>
+        <button onclick="verDashboard('${a.codigo}')" style="background:#1e3a5f;color:white;border:none;padding:6px 12px;border-radius:8px;cursor:pointer">Dashboard</button>
+        <button onclick="copiarLink('${linkBase}')" style="background:#c9a86a;color:#111;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700">Copiar Link</button>
+        <button onclick="excluir('${a.id}')" style="background:#ff453a22;color:#ff453a;border:1px solid #ff453a44;padding:6px 12px;border-radius:8px">Excluir</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderVendas(vendas){
+  document.getElementById('vendas').innerHTML=`<div style="display:grid;gap:8px">`+vendas.slice(0,20).map(v=>`<div style="background:#111827;border:1px solid #1f2a44;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between"><div><b>${v.produtoNome||v.produtoId}</b> • ${v.clienteNome||'Cliente'}<br><small style="color:#9aa4bf">Afiliado: ${v.afiliadoNome||v.codigoRef||'Direto'} • ${new Date(v.created_at).toLocaleString()}</small></div><div style="text-align:right"><div style="color:#e8c88a;font-weight:700">R$ ${v.valor?.toFixed(2)} → Comissão R$ ${v.comissao?.toFixed(2)} (${v.porcentagem}%)</div><span class="badge ${v.status==='Pago'?'ativo':'inativo'}">${v.status}</span></div></div>`).join('')+`</div>`;
+}
+function novoAfiliado(){ editId=null; document.getElementById('formArea').innerHTML=formHtml({}); }
+function editar(id){ const a=afiliados.find(x=>x.id===id); editId=id; document.getElementById('formArea').innerHTML=formHtml(a); }
+function formHtml(a){
+  return `<div class="form"><h3>${editId?'Editar Afiliado':'Novo Afiliado'}</h3>
+  <div class="form-grid">
+    <input id="f_nome" placeholder="Nome completo" value="${a.nome||''}">
+    <input id="f_email" placeholder="Email" value="${a.email||''}">
+    <input id="f_tel" placeholder="WhatsApp" value="${a.telefone||''}">
+    <input id="f_codigo" placeholder="Código (auto se vazio)" value="${a.codigo||''}">
+    <input id="f_porc" type="number" placeholder="% padrão (ex: 30)" value="${a.porcentagemPadrao||30}">
+    <input id="f_pix" placeholder="Chave PIX para pagamento" value="${a.chavePix||''}">
+    <select id="f_status"><option ${a.status==='Ativo'?'selected':''}>Ativo</option><option ${a.status==='Inativo'?'selected':''}>Inativo</option></select>
+  </div>
+  <div style="margin-top:16px;background:#0a0e1a;padding:12px;border-radius:12px;border:1px solid #1f2a44">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#e8c88a">Configurar % por produto (opcional - sobrepõe o padrão)</div>
+    <div style="display:grid;gap:8px;max-height:200px;overflow:auto">
+    ${produtos.filter(p=>p.permiteAfiliado).map(p=>`<div style="display:flex;gap:8px;align-items:center"><span style="flex:1;font-size:13px">${p.nome} - R$ ${p.preco}</span><input id="perc_${p.id}" type="number" placeholder="%" value="${a.porcentagemPadrao||30}" style="width:70px;background:#0f172a;border:1px solid #1f2a44;border-radius:8px;padding:6px;color:white"><span style="font-size:11px;color:#9aa4bf">% = R$ ${(p.preco*(a.porcentagemPadrao||30)/100).toFixed(2)}</span></div>`).join('')}
+    </div>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:8px"><button class="btn-gold" onclick="salvar()">SALVAR AFILIADO</button><button onclick="document.getElementById('formArea').innerHTML=''" style="background:#1f2a44;color:white;border:none;padding:10px 18px;border-radius:999px">Cancelar</button></div></div>`;
+}
+async function salvar(){
+  const obj={nome:document.getElementById('f_nome').value,email:document.getElementById('f_email').value,telefone:document.getElementById('f_tel').value,codigo:document.getElementById('f_codigo').value||undefined,porcentagemPadrao:parseFloat(document.getElementById('f_porc').value)||30,chavePix:document.getElementById('f_pix').value,status:document.getElementById('f_status').value};
+  if(!obj.nome||!obj.email){alert('Nome e email obrigatórios');return;}
+  const metodo=editId?'PUT':'POST';const url=editId?`/api/afiliados/${editId}`:'/api/afiliados';
+  const res=await fetch(url,{method:metodo,headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});const data=await res.json();
+  const afiliadoId=data.id||editId;
+  // Salva % por produto
+  for(const p of produtos){
+    const el=document.getElementById(`perc_${p.id}`); if(el){
+      const perc=parseFloat(el.value); if(perc!==obj.porcentagemPadrao){
+        await fetch('/api/afiliado-produtos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({afiliadoId,produtoId:p.id,porcentagem:perc})});
+      }
+    }
+  }
+  document.getElementById('formArea').innerHTML=''; carregar();
+}
+async function excluir(id){ if(confirm('Excluir afiliado?')){ await fetch(`/api/afiliados/${id}`,{method:'DELETE'}); carregar(); }}
+function copiarLink(link){ navigator.clipboard.writeText(link); alert('Link copiado: '+link); }
+function verDashboard(codigo){ window.open(`afiliado.html?codigo=${codigo}`,'_blank'); }
+async function salvarGlobal(){ const v=document.getElementById('comissaoGlobal').value; await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chave:'comissao_global',valor:v})}); alert('Comissão global salva: '+v+'%'); }
+carregar();
+</script></body></html>

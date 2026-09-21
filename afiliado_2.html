@@ -1,0 +1,29 @@
+
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meu Dashboard - Afiliado</title><link rel="stylesheet" href="style.css"></head><body>
+<header class="header"><div class="logo">DWB <span>AFILIADO</span></div><a href="index.html" class="btn-gold" style="text-decoration:none">Vitrine</a></header>
+<div style="max-width:900px;margin:32px auto;padding:0 16px">
+<div id="info" style="background:#111827;border:1px solid #1f2a44;border-radius:16px;padding:20px;margin-bottom:20px"></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+<div style="background:#111827;border:1px solid #1f2a44;border-radius:16px;padding:16px;text-align:center"><div style="font-size:28px;font-weight:900;color:#e8c88a" id="cliques">0</div><div style="color:#9aa4bf;font-size:12px">CLIQUES NO SEU LINK</div></div>
+<div style="background:#111827;border:1px solid #1f2a44;border-radius:16px;padding:16px;text-align:center"><div style="font-size:28px;font-weight:900;color:#30d158" id="vendas">0</div><div style="color:#9aa4bf;font-size:12px">VENDAS</div></div>
+<div style="background:#111827;border:1px solid #1f2a44;border-radius:16px;padding:16px;text-align:center"><div style="font-size:28px;font-weight:900;color:#e8c88a" id="comissao">R$ 0</div><div style="color:#9aa4bf;font-size:12px">COMISSÃO</div></div>
+</div>
+<h3>Seus Links</h3><div id="links" style="margin:12px 0"></div>
+<h3 style="margin-top:24px">Últimas Vendas</h3><div id="listaVendas"></div>
+</div>
+<script>
+const codigo=new URLSearchParams(window.location.search).get('codigo');
+async function load(){
+  if(!codigo){ document.body.innerHTML='<div style="padding:40px;text-align:center">Informe ?codigo=SEUCODIGO na URL</div>'; return; }
+  const r=await fetch(`/api/stats/afiliado/${codigo}`); if(!r.ok){ document.body.innerHTML='Afiliado não encontrado'; return; }
+  const data=await r.json();
+  document.getElementById('info').innerHTML=`<h2>${data.afiliado.nome}</h2><div style="color:#9aa4bf">${data.afiliado.email} • Código: <b style="color:#e8c88a">${data.afiliado.codigo}</b> • ${data.afiliado.porcentagemPadrao}% padrão</div><div style="margin-top:8px">Saldo: <b style="color:#30d158">R$ ${(data.afiliado.saldo||0).toFixed(2)}</b> • PIX: ${data.afiliado.chavePix||'Não informado'}</div>`;
+  document.getElementById('cliques').textContent=data.cliques;
+  document.getElementById('vendas').textContent=data.vendas;
+  document.getElementById('comissao').textContent='R$ '+(data.totalComissao||0).toFixed(2);
+  const linkGeral=`${window.location.origin}/?ref=${codigo}`;
+  document.getElementById('links').innerHTML=`<div style="background:#0a0e1a;border:1px dashed #2a5a8a;border-radius:12px;padding:12px"><div style="font-family:monospace;color:#e8c88a;word-break:break-all">${linkGeral}</div><button class="btn-gold" style="margin-top:8px" onclick="navigator.clipboard.writeText('${linkGeral}');alert('Copiado!')">Copiar meu link geral</button><div style="font-size:12px;color:#9aa4bf;margin-top:8px">Esse link rastreia qualquer venda na vitrine.</div></div>`;
+  document.getElementById('listaVendas').innerHTML=data.ultimasVendas.map(v=>`<div style="background:#111827;border:1px solid #1f2a44;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between"><div><b>${v.produtoNome||v.produtoId}</b><br><small style="color:#9aa4bf">${new Date(v.created_at).toLocaleString()}</small></div><div style="color:#30d158;font-weight:700">+ R$ ${v.comissao.toFixed(2)} (${v.porcentagem}%)</div></div>`).join('')||'<div style="color:#9aa4bf">Nenhuma venda ainda</div>';
+}
+load();
+</script></body></html>
